@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Dropbox } from "dropbox";
+import  './App.css';
 
 function App() {
   const [name, setName] = useState("");

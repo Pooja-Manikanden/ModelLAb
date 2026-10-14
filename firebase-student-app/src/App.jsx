@@ -122,7 +122,7 @@ function App() {
     <div className="app">
       <header>
         <h1>Student Registration System</h1>
-        <p>React + Firebase Authentication + Firestore</p>
+       
       </header>
 
       <main>
