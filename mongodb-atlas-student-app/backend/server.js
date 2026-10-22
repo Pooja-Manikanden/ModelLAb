@@ -1,26 +1,43 @@
 
+const dns = require("node:dns");
+dns.setServers(["8.8.8.8"]);
+
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
+// Student Schema
 const studentSchema = new mongoose.Schema({
-    name: String,
-    registerNumber: String,
-    department: String
+    name: {
+        type: String,
+        required: true
+    },
+    registerNumber: {
+        type: String,
+        required: true
+    },
+    department: {
+        type: String,
+        required: true
+    }
 });
 
 const Student = mongoose.model("Student", studentSchema);
 
+// Home Route
 app.get("/", (req, res) => {
     res.send("MongoDB Atlas Student App is running!");
 });
 
+// Add Student
 app.post("/students", async (req, res) => {
     try {
         const student = await Student.create(req.body);
@@ -30,6 +47,7 @@ app.post("/students", async (req, res) => {
     }
 });
 
+// Get All Students
 app.get("/students", async (req, res) => {
     try {
         const students = await Student.find();
@@ -39,13 +57,24 @@ app.get("/students", async (req, res) => {
     }
 });
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
+// Connect to MongoDB and Start Server
+async function startServer() {
+    try {
+        if (!process.env.MONGO_URI) {
+            throw new Error("MONGO_URI is missing from the .env file");
+        }
+
+        await mongoose.connect(process.env.MONGO_URI);
+
         console.log("MongoDB Atlas connected successfully!");
-        app.listen(5000, () => {
-            console.log("Server running at http://localhost:5000");
+
+        app.listen(PORT, () => {
+            console.log(`Server running at http://localhost:${PORT}`);
         });
-    })
-    .catch(error => {
-        console.log("MongoDB connection failed:", error.message);
-    });
+    } catch (error) {
+        console.error("MongoDB connection failed:", error.message);
+        process.exit(1);
+    }
+}
+
+startServer();

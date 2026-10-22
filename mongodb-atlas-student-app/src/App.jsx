@@ -1,44 +1,75 @@
 import { useState, useEffect } from "react";
-import './App.css';
+import "./App.css";
 
 function App() {
     const [name, setName] = useState("");
     const [registerNumber, setRegisterNumber] = useState("");
     const [department, setDepartment] = useState("");
     const [students, setStudents] = useState([]);
+    const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
 
+    const API_URL = "http://localhost:5000";
+
+    // Load all students from MongoDB
     const loadStudents = async () => {
-        const response = await fetch("http://localhost:5000/students");
-        const data = await response.json();
-        setStudents(data);
+        try {
+            const response = await fetch(`${API_URL}/students`);
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch students");
+            }
+
+            const data = await response.json();
+            setStudents(data);
+        } catch (error) {
+            console.error("Error loading students:", error);
+            setMessage("Could not load students. Check your backend.");
+        }
     };
 
     useEffect(() => {
         loadStudents();
     }, []);
 
+    // Save student to MongoDB
     const addStudent = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setMessage("");
 
-        const response = await fetch("http://localhost:5000/students", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                name,
-                registerNumber,
-                department
-            })
-        });
+        const student = {
+            name: name.trim(),
+            registerNumber: registerNumber.trim(),
+            department: department.trim()
+        };
 
-        if (response.ok) {
+        try {
+            const response = await fetch(`${API_URL}/students`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(student)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to save student");
+            }
+
+            setMessage("Student saved successfully!");
             setName("");
             setRegisterNumber("");
             setDepartment("");
-            loadStudents();
-        } else {
-            alert("Failed to save student details");
+
+            await loadStudents();
+        } catch (error) {
+            console.error("Error saving student:", error);
+            setMessage("Error: " + error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -74,8 +105,12 @@ function App() {
                 />
                 <br /><br />
 
-                <button type="submit">Save Student</button>
+                <button type="submit" disabled={loading}>
+                    {loading ? "Saving..." : "Save Student"}
+                </button>
             </form>
+
+            {message && <p>{message}</p>}
 
             <hr />
 
